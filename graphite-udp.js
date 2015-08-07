@@ -12,10 +12,14 @@ function Client(options) {
     interval: 5000,
     type: 'udp4'
   }
+  
+  var bound = false;
 
   function init() {
     options = util._extend(defaults, options)
     socket = dgram.createSocket(options.type)
+    
+    socket.bind({exclusive: true}, function() { bound = true; })
 
     socket.on('close', function () {
       log('UDP socket closed')
@@ -63,6 +67,11 @@ function Client(options) {
   }
 
   function send(callback) {
+    if (!bound) {
+      setTimeout(function() {send(callback);}, 100);
+      return;
+    }
+    
     if(Object.keys(queue).length === 0) {
       log('Queue is empty. Nothing to send')
       return
